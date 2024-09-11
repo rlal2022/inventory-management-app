@@ -89,6 +89,7 @@ export default function Home() {
       alignItems={"center"}
       gap={2}
     >
+      <Typography>Pantry app</Typography>
       <Modal
         open={open}
         onClose={handleClose}
