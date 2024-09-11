@@ -8,8 +8,12 @@ import {
   Button,
   Modal,
   TextField,
+  InputLabel,
+  FormControl,
+  MenuItem,
+  Select,
 } from "@mui/material";
-import { firestore } from "@/firebase";
+import firestore from "./firebase";
 import {
   collection,
   doc,
@@ -19,6 +23,7 @@ import {
   deleteDoc,
   getDoc,
 } from "firebase/firestore";
+import { SignInButton, useUser } from "@clerk/nextjs";
 
 const style = {
   position: "absolute",
@@ -39,6 +44,8 @@ export default function Home() {
   const [inventory, setInventory] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState("");
+  const [category, setCategory] = useState([]);
+  const { user } = useUser();
 
   const updateInventory = async () => {
     const snapshot = query(collection(firestore, "inventory"));
@@ -79,6 +86,15 @@ export default function Home() {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  if (!user) {
+    return (
+      <>
+        <Typography>You must be signed in to view this page</Typography>
+        <SignInButton />
+      </>
+    );
+  }
+
   return (
     <Box
       width="100vw"
@@ -109,6 +125,26 @@ export default function Home() {
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
             />
+            <FormControl fullWidth>
+              <InputLabel>Category</InputLabel>
+              <Select
+                id="category"
+                value={category}
+                label="Category"
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <MenuItem value={category}>Produce</MenuItem>
+                <MenuItem value={category}>Dairy</MenuItem>
+                <MenuItem value={category}>Meats & Seafoods</MenuItem>
+                <MenuItem value={category}>Seafood</MenuItem>
+                <MenuItem value={category}>Dry Goods & Grains</MenuItem>
+                <MenuItem value={category}>Beverages</MenuItem>
+                <MenuItem value={category}>Condiments & Sauces</MenuItem>
+                <MenuItem value={category}>Spices & Seasonings</MenuItem>
+                <MenuItem value={category}>Frozen Items</MenuItem>
+                <MenuItem value={category}>Breads & Baked Goods</MenuItem>
+              </Select>
+            </FormControl>
             <Button
               variant="outlined"
               onClick={() => {
