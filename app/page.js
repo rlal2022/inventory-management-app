@@ -13,7 +13,7 @@ import {
   MenuItem,
   Select,
 } from "@mui/material";
-import firestore from "./firebase";
+import { db } from "./firebase";
 import {
   collection,
   doc,
@@ -42,45 +42,37 @@ const style = {
 
 export default function Home() {
   const [inventory, setInventory] = useState([]);
-  const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState("");
-  const [category, setCategory] = useState([]);
+  const [category, setCategory] = useState(null);
+  const [quantity, setQuanity] = useState(1);
+  const [open, setOpen] = useState(false);
   const { user } = useUser();
 
-  const updateInventory = async () => {
-    const snapshot = query(collection(firestore, "inventory"));
-    const docs = await getDocs(snapshot);
-    const inventoryList = [];
-    docs.forEach((doc) => {
-      inventoryList.push({ name: doc.id, ...doc.data() });
-    });
-    setInventory(inventoryList);
-  };
+  const addItem = async () => {
+    const userId = user.id;
 
-  useEffect(() => {
-    updateInventory();
-  }, []);
+    const userRef = doc(
+      db,
+      `users/${userId}/inventory/categories/${category}/${itemName}`
+    );
 
-  const addItem = async (item) => {
-    const docRef = doc(collection(firestore, "inventory"), item);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const { quantity } = docSnap.data();
-      await setDoc(docRef, { quantity: quantity + 1 });
-    } else {
-      await setDoc(docRef, { quantity: 1 });
+    try {
+      await setDoc(userRef, {
+        name: itemName,
+        quantity: quantity + 1,
+      });
+    } catch (error) {
+      console.error("Error adding to inventory: ", error);
     }
-    await updateInventory();
   };
 
   const removeItem = async (item) => {
-    const docRef = doc(collection(firestore, "inventory"), item);
+    const docRef = doc(doc(db, `inventory/category/${category}/${item}`));
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
       await deleteDoc(docRef);
     }
-    await updateInventory;
   };
 
   const handleOpen = () => setOpen(true);
@@ -132,24 +124,38 @@ export default function Home() {
                 value={category}
                 label="Category"
                 onChange={(e) => setCategory(e.target.value)}
+                sx={{
+                  " .MuiSelect-root, .MuiSelect-select": {
+                    color: "#000",
+                  },
+                }}
               >
-                <MenuItem value={category}>Produce</MenuItem>
-                <MenuItem value={category}>Dairy</MenuItem>
-                <MenuItem value={category}>Meats & Seafoods</MenuItem>
-                <MenuItem value={category}>Seafood</MenuItem>
-                <MenuItem value={category}>Dry Goods & Grains</MenuItem>
-                <MenuItem value={category}>Beverages</MenuItem>
-                <MenuItem value={category}>Condiments & Sauces</MenuItem>
-                <MenuItem value={category}>Spices & Seasonings</MenuItem>
-                <MenuItem value={category}>Frozen Items</MenuItem>
-                <MenuItem value={category}>Breads & Baked Goods</MenuItem>
+                <MenuItem value="Produce">Produce</MenuItem>
+                <MenuItem value="Dairy">Dairy</MenuItem>
+                <MenuItem value="Meats & Seafoods">Meats & Seafoods</MenuItem>
+                <MenuItem value="Seafood">Seafood</MenuItem>
+                <MenuItem value="Dry Goods & Grains">
+                  Dry Goods & Grains
+                </MenuItem>
+                <MenuItem value="Beverages">Beverages</MenuItem>
+                <MenuItem value="Condiments & Sauces">
+                  Condiments & Sauces
+                </MenuItem>
+                <MenuItem value="Spices & Seasonings">
+                  Spices & Seasonings
+                </MenuItem>
+                <MenuItem value="Frozen Items">Frozen Items</MenuItem>
+                <MenuItem value="Breads & Baked Goods">
+                  Breads & Baked Goods
+                </MenuItem>
               </Select>
             </FormControl>
             <Button
               variant="outlined"
               onClick={() => {
-                addItem(itemName);
+                addItem();
                 setItemName("");
+                setCategory("");
                 handleClose();
               }}
             >
